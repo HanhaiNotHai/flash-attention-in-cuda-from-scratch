@@ -7,15 +7,23 @@ Assembled from your step-by-step solutions.
 import numpy as np
 
 # Step 1 - vector_add
-__global__ void vector_add(const float *a, const float *b, float *c, int n) {
+__global__ void vector_add(const float* a, const float* b, float* c, int n) {
     // TODO: implement elementwise c[i] = a[i] + b[i]
-    for (int i = 0; i < n; i++) {
+
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (i < n) {
         c[i] = a[i] + b[i];
     }
 }
 
-# Step 2 - scale_array (not yet solved)
-# TODO: implement
+# Step 2 - scale_array
+__global__ void scale_array(float *a, float scalar, int n) {
+    // TODO: multiply each element of a by scalar in place
+    for (int i = 0; i < n; i++) {
+        a[i] *= scalar;
+    }
+}
 
 # Step 3 - elementwise_exp (not yet solved)
 # TODO: implement
