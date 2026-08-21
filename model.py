@@ -129,20 +129,21 @@ __global__ void qk_scores(const float *q, const float *k, float *scores, int seq
 }
 
 # Step 10 - softmax_rows
-__global__ void softmax_rows(float* matrix, int rows, int cols) {
+__global__ void softmax_rows(float *matrix, int rows, int cols) {
+    // TODO: implement numerically stable row-wise softmax in place
+
     extern __shared__ float shared[];
 
     int row = blockIdx.x;
     int tid = threadIdx.x;
 
-    if (row >= rows)
+    if (row >= rows) {
         return;
+    }
 
-    float* row_data = matrix + row * cols;
+    float *row_data = matrix + row * cols;
 
-    // ----------------------------
     // 1. Find row maximum
-    // ----------------------------
     float local_max = -INFINITY;
 
     for (int c = tid; c < cols; c += blockDim.x) {
@@ -155,23 +156,17 @@ __global__ void softmax_rows(float* matrix, int rows, int cols) {
     shared[tid] = local_max;
     __syncthreads();
 
-
     // reduction max
     for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
-        if (tid < stride) {
-            if (shared[tid + stride] > shared[tid]) {
-                shared[tid] = shared[tid + stride];
-            }
+        if (tid < stride && shared[tid + stride] > shared[tid]) {
+            shared[tid] = shared[tid + stride];
         }
         __syncthreads();
     }
 
     float row_max = shared[0];
 
-
-    // ----------------------------
     // 2. Compute exp(x-max) and sum
-    // ----------------------------
     float local_sum = 0.0f;
 
     for (int c = tid; c < cols; c += blockDim.x) {
@@ -183,7 +178,6 @@ __global__ void softmax_rows(float* matrix, int rows, int cols) {
     shared[tid] = local_sum;
     __syncthreads();
 
-
     // reduction sum
     for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
         if (tid < stride) {
@@ -194,10 +188,7 @@ __global__ void softmax_rows(float* matrix, int rows, int cols) {
 
     float row_sum = shared[0];
 
-
-    // ----------------------------
     // 3. Normalize
-    // ----------------------------
     for (int c = tid; c < cols; c += blockDim.x) {
         row_data[c] /= row_sum;
     }
