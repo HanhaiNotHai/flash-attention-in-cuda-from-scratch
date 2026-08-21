@@ -214,80 +214,38 @@ __global__ void pv_matmul(const float *p, const float *v, float *out, int seq_le
 }
 
 # Step 12 - naive_attention
-void naive_attention(const float* d_q,
-                     const float* d_k,
-                     const float* d_v,
-                     float* d_out,
-                     int seq_len,
-                     int head_dim) {
+void naive_attention(const float *d_q, const float *d_k, const float *d_v, float *d_out, int seq_len, int head_dim) {
+    // TODO: allocate scratch, launch qk_scores -> softmax_rows -> pv_matmul, free scratch
 
-    // -----------------------------
     // allocate score matrix
-    // -----------------------------
-    float* d_scores;
+    float *d_scores;
 
     size_t score_bytes = seq_len * seq_len * sizeof(float);
 
     cudaMalloc(&d_scores, score_bytes);
 
-
-    // -----------------------------
     // 1. QK^T / sqrt(d)
-    // -----------------------------
     dim3 block_qk(16, 16);
 
-    dim3 grid_qk(
-        (seq_len + block_qk.x - 1) / block_qk.x,
-        (seq_len + block_qk.y - 1) / block_qk.y
-    );
+    dim3 grid_qk((seq_len + block_qk.x - 1) / block_qk.x, (seq_len + block_qk.y - 1) / block_qk.y);
 
-    qk_scores<<<grid_qk, block_qk>>>(
-        d_q,
-        d_k,
-        d_scores,
-        seq_len,
-        head_dim
-    );
+    qk_scores<<<grid_qk, block_qk>>>(d_q, d_k, d_scores, seq_len, head_dim);
 
-
-    // -----------------------------
     // 2. Row-wise softmax
-    // -----------------------------
     int softmax_threads = 256;
 
     size_t shared_bytes = softmax_threads * sizeof(float);
 
-    softmax_rows<<<seq_len,
-                   softmax_threads,
-                   shared_bytes>>>(
-        d_scores,
-        seq_len,
-        seq_len
-    );
+    softmax_rows<<<seq_len, softmax_threads, shared_bytes>>>(d_scores, seq_len, seq_len);
 
-
-    // -----------------------------
     // 3. P * V
-    // -----------------------------
     dim3 block_pv(16, 16);
 
-    dim3 grid_pv(
-        (head_dim + block_pv.x - 1) / block_pv.x,
-        (seq_len + block_pv.y - 1) / block_pv.y
-    );
+    dim3 grid_pv((head_dim + block_pv.x - 1) / block_pv.x, (seq_len + block_pv.y - 1) / block_pv.y);
 
-    pv_matmul<<<grid_pv, block_pv>>>(
-        d_scores,
-        d_v,
-        d_out,
-        seq_len,
-        head_dim
-    );
+    pv_matmul<<<grid_pv, block_pv>>>(d_scores, d_v, d_out, seq_len, head_dim);
 
-
-    // -----------------------------
     // free scratch memory
-    // -----------------------------
     cudaFree(d_scores);
 }
 
