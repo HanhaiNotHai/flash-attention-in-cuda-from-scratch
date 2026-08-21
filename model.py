@@ -145,10 +145,7 @@ __global__ void softmax_rows(float *matrix, int rows, int cols) {
     float local_max = -INFINITY;
 
     for (int c = tid; c < cols; c += blockDim.x) {
-        float val = row_data[c];
-        if (val > local_max) {
-            local_max = val;
-        }
+        local_max = fmaxf(local_max, row_data[c]);
     }
 
     shared[tid] = local_max;
