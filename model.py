@@ -66,10 +66,13 @@ __global__ void row_sum(const float *matrix, float *out, int rows, int cols) {
     int r = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (r < rows) {
-        out[r] = 0.0f;
+        float sum_val = 0.0f;
+
         for (int c = 0; c < cols; c++) {
-            out[r] += matrix[r * cols + c];
+            sum_val += matrix[r * cols + c];
         }
+
+        out[r] = sum_val;
     }
 }
 
