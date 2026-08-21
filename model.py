@@ -49,10 +49,7 @@ __global__ void row_max(const float *matrix, float *out, int rows, int cols) {
         float max_val = -INFINITY;
 
         for (int c = 0; c < cols; c++) {
-            float val = matrix[r * cols + c];
-            if (val > max_val) {
-                max_val = val;
-            }
+            max_val = fmaxf(max_val, matrix[r * cols + c]);
         }
 
         out[r] = max_val;
