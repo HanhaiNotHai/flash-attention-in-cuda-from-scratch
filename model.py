@@ -116,7 +116,7 @@ __global__ void qk_scores(const float *q, const float *k, float *scores, int seq
     int j = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (i < seq_len && j < seq_len) {
-        scores[i * seq_len + j] = dot_product(q + i * head_dim, k + j * head_dim, head_dim) / sqrtf(float(head_dim));
+        scores[i * seq_len + j] = dot_product(q + i * head_dim, k + j * head_dim, head_dim) / sqrtf((float)head_dim);
     }
 }
 
