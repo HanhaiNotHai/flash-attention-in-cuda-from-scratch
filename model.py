@@ -115,13 +115,15 @@ __global__ void qk_scores(const float *q, const float *k, float *scores, int seq
     int i = blockIdx.y * blockDim.y + threadIdx.y;
     int j = blockIdx.x * blockDim.x + threadIdx.x;
 
-    if (i < seq_len & j < seq_len) {
+    if (i < seq_len && j < seq_len) {
         scores[i * seq_len + j] = dot_product(q + i * head_dim, k + j * head_dim, head_dim) / sqrtf(float(head_dim));
     }
 }
 
-# Step 10 - softmax_rows (not yet solved)
-# TODO: implement
+# Step 10 - softmax_rows
+__global__ void softmax_rows(float* matrix, int rows, int cols) {
+    // TODO: implement numerically stable row-wise softmax in place
+}
 
 # Step 11 - pv_matmul (not yet solved)
 # TODO: implement
