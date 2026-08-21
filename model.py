@@ -46,13 +46,16 @@ __global__ void row_max(const float *matrix, float *out, int rows, int cols) {
     int r = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (r < rows) {
-        out[r] = -INFINITY;
+        float max_val = -INFINITY;
+
         for (int c = 0; c < cols; c++) {
             float val = matrix[r * cols + c];
-            if (val > out[r]) {
-                out[r] = val;
+            if (val > max_val) {
+                max_val = val;
             }
         }
+
+        out[r] = max_val;
     }
 }
 
