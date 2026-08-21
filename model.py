@@ -95,10 +95,12 @@ __global__ void matmul(const float *a, const float *b, float *c, int m, int k, i
     int j = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (i < m && j < n) {
-        c[i * n + j] = 0.0f;
+        float sum = 0.0f;
         for (int l = 0; l < k; l++) {
-            c[i * n + j] += a[i * k + l] * b[l * n + j];
+            sum += a[i * k + l] * b[l * n + j];
         }
+
+        c[i * n + j] = sum;
     }
 }
 
